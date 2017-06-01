@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt_BR" manifest="StikyNotes.manifest">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script>
+        var db = null; // this is database
+
+        function openNotesDatabase(){
+            db=openDatabase('NoteTest6', '1.0', 'HTML5 SQLite', 200000);
+        }
+
+        function showSchema(){
+            db.transaction(function(tx){
+                tx.executeSql("SELECT * FROM sqlite_master", [], function(tx, result){
+                    var schemanode=document.getElementById('schema');
+                    schemanode.innerHTML="";
+
+                    for (var i = 0; i < result.rows.length; i++){
+                        var row = result.rows.item(i);
+                        var notediv = document.createElement('div');
+                        notediv.innerHTML='type:'+row['type']+', name: '+row['name']+', tbl_name:'+row['tbl_name']+', rootpage: '+row['rootpage']+', sql: '+row['sql'];
+                        schemanode.appendChild(notediv);                        
+                    }
+                }, function(tx, error){
+                    alert('couldn\'t get data from database - '+error.message);
+                    return;
+                });
+            });
+        }
+
+        function showNotes(){
+            db.transaction(function(tx){
+                tx.executeSql('SELECT id, note, timestamp FROM WebKitStickyNotes', [], function(tx,result){
+                    var notesnode=document.getElementById('notes');
+                    notesnode.innerHTML="";
+
+                    for(var i = 0; i < result.rows.length; i++){
+                        var row = result.rows.item(i);
+                        var notediv = document.createElement('div');
+                        notediv.innerHTML="id:"+row['id']+', timestamp: '+row['timestamp']+', note: '+row['note'];
+                        notesnode.appendChild(notediv);
+                    }
+                }, function(tx,error){
+                    alert('couldn\'t get data from database - '+error.message);
+                    return;
+                });
+            });
+        }
+
+        function createNoteTable(){
+            db.transaction(function(tx){tx.executeSql('create table WebKitStickyNotes (id REAL UNIQUE, note TEXT, timestamp REAL)', [], function(result){ alert('Create table WebKitStickyNotes: '+result)})});
+        }
+
+        function deleteNote(id){
+            db.transaction(function(tx){
+                tx.executeSql('delete from WebKitStickyNotes where id=? ', [id]);
+            });
+        }
+
+        function createNote(id,note){
+            rightnow=new Date().getTime();
+            db.transaction(function(tx){
+                tx.executeSql('insert into WebKitStickyNotes values(?,?,?) ', [id,note,rightnow]);
+            });
+        }
+
+        function loadNotesButtonHandler(){
+            nowe=new Date().getTime();
+            openNotesDatabase();
+            alert('Read: '+nowe);
+            showNotes();
+        }
+    </script>
+</head>
+<body>
+    <button id="newNoteButton" onclick="loadNotesButtonHandler()">Load</button>
+    <h3>Notas</h3>
+    <div id="notes"></div>
+
+    <h3>Schema</h3>
+    <div id="schema"></div>
+</body>
+</html>﻿
